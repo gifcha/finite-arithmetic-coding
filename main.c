@@ -41,11 +41,6 @@ int main() {
 
 
 
-struct probability_pair {
-	char character;
-	int probability;
-};
-
 
 Dict* getCountDict(FILE* file_ptr) {
 	Dict* dict_ptr = new_Dict();
@@ -58,15 +53,10 @@ Dict* getCountDict(FILE* file_ptr) {
 		}
 
 		// get char from file
-		char buf[2]; // fgets gets n-1 chars, thus size = 2
-		char* symbol = fgets(buf, sizeof buf, file_ptr);
-		if (symbol == NULL) {
-			rewind(file_ptr);
-			return dict_ptr;
-		}
+		char symbol = fgetc(file_ptr);
 
 		// add char to dict
-		if (dict_ptr->get(dict_ptr, buf) != -1) {
+		if (dict_ptr->get(dict_ptr, symbol) != -1) {
 			// add +1 to current count
 			dict_ptr->insert(dict_ptr, symbol, dict_ptr->get(dict_ptr, symbol)+1);
 		}
@@ -80,20 +70,14 @@ Dict* getCountDict(FILE* file_ptr) {
 	return dict_ptr;
 }
 
-int getRangeEnd(int c_start, char* sym, Dict* d, int l_start, int l_end) {
-	return c_start + (d->get(d, sym) * (l_end - l_start));
-}
-
 void encode(FILE* file_ptr, Dict* dict_ptr) {
+
+	while(feof(file_ptr) == 0) {
 		// get char from file
-		char buf[2]; // fgets gets n-1 chars, thus size = 2
-		char* symbol = fgets(buf, sizeof buf, file_ptr);
+		char symbol = fgetc(file_ptr);
+	}
 
-		if (symbol == NULL) {
-			rewind(file_ptr);
-			return;
-		}
-
+	rewind(file_ptr);
 }
 
 char getNextDecodedChar(FILE* file_ptr, Dict* dict_ptr) {
