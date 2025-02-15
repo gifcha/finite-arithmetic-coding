@@ -36,8 +36,7 @@ int main() {
 
 	dict_ptr->print(dict_ptr);
 	printf("total: %d\n", dict_ptr->getTotalCount(dict_ptr));
-
-	//TODO test the new probabilty functions
+	
 
 	return 0;
 }
