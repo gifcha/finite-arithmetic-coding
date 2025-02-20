@@ -1,6 +1,7 @@
 #pragma once
 
 #include "dict.h"
+#include <limits.h>
 #include <math.h>
 
 // S+(P(C))*R
@@ -61,7 +62,7 @@ static unsigned int getProbability(Dict *dict_ptr, char c) {
 	unsigned int total = dict_ptr->getTotalCount(dict_ptr);
 
 	long double division = ((long double)count / (long double)total);
-	division = division * pow(2, 32);
+	division = division * UINT_MAX;
 
 	p = (unsigned int) division;
 
@@ -114,19 +115,64 @@ static void encode(FILE *file_ptr, Dict *dict_ptr) {
 	fwrite(&dict_size, sizeof(dict_size), 1, encoded_file);
 
 	// encode second 64 bits (long int) as the amount of bits that need to be read to decode
+	fseek(file_ptr, 64/8, SEEK_CUR); // skip 64 bits because we dont have the amount of encoded bits yet
 
+	unsigned long int bit_total = 0; // Total amount of bits used for encoding the file content (not including the dict)
 	while (feof(file_ptr) == 0) {
-		char* byte_arr = (char*) "\0";
-		short index = 0;
+		// Everything in here happens on each char read
 		char symbol = fgetc(file_ptr);
+
+		char* byte_arr = (char*) malloc(1);
+		byte_arr[0] = 0;
+		int change = 0;
+		int target = UINT_MAX / 2;
+		int smallest_p = getSmallestProbability(dict_ptr);
 		int probability = getProbability(dict_ptr, symbol);
+		unsigned int p_start;
+		unsigned int p_end;
+		ProbabilityRange(&p_start, &p_end, dict_ptr, symbol);
+		int bit_count = 0;
+		int index = 0;
 
 		// encoding bits to byte_arr
-		while (1) {
-			
+		while (change != 0 && change > smallest_p) {
+			// byte_arr extending
+			if (bit_count >= 8) {
+				bit_total += bit_count;
+				index += 1;
+				bit_count = 0;
+				
+				// reallocate byte_arr to be current size + 1
+				byte_arr = (char*) realloc(byte_arr, sizeof(byte_arr)+1);
+			}
+
+			// divide right (1)
+			if (p_end > target) { 
+				byte_arr[index] += 1;
+			}
+
+			// divide left  (0)
+			if (p_end < target) { 
+				byte_arr[index] = byte_arr[index] << 1;
+			}
+
+			if (target > p_start && target < p_end) {
+				// target is in probability range
+				bit_total += bit_count;
+				break;
+			}
+
+			bit_count += 1;
 		}
+
+		// write encoded bits to file
+		int success = fwrite(&byte_arr, sizeof(char), sizeof(byte_arr), encoded_file);
+		printf("Successfully wrote %d bytes from %lu\n", success, sizeof(byte_arr));
+		free(byte_arr);
 	}
 
+	fseek(file_ptr, 3, SEEK_SET); // seek to the 3rd byte
+	fwrite(&bit_total, sizeof(unsigned long int), 1, encoded_file); // write amount of encoded bits to file
 	rewind(file_ptr);
 }
 
