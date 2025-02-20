@@ -1,3 +1,5 @@
+#pragma once // prevents double inclusion same as include guard
+
 #include <stdio.h> 
 #include <stdlib.h>
 #include <ctype.h>
@@ -6,10 +8,6 @@
 
 #define MAX_SIZE 256 // Maximum number of elements in the map 
 
-// TODO
-// remake dict to contain struct with probability range (start, end)
-// need dict that contains character with ranges
-//
 
 typedef struct Dict Dict;
 struct Dict {
@@ -61,10 +59,10 @@ static int dict_get(Dict* self, char key) {
 	} 
 } 
 
-// Function to print the map 
-static void dict_printMap(Dict* self) { 
+// Function to print the dict 
+static void dict_print(Dict* self) { 
 	for (int i = 0; i < self->size; i++) { 
-		char key_str[3] = {'\0', '\0', '\0'}; // without setting \0 chars from previous iterations stay
+		char key_str[8] = {'\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'}; // clears the key_str otherwise chars from prev iterations stay
 		key_str[0] = self->keys[i];
 
 		// convert special symbols for printing
@@ -74,6 +72,36 @@ static void dict_printMap(Dict* self) {
 				break;
 			case '\r':
 				strcpy(key_str, (char*) "\\r");
+				break;
+			case '\b':
+				strcpy(key_str, (char*) "\\b");
+				break;
+			case '\f':
+				strcpy(key_str, (char*) "\\f");
+				break;
+			case '\t':
+				strcpy(key_str, (char*) "\\t");
+				break;
+			case '\v':
+				strcpy(key_str, (char*) "\\v");
+				break;
+			case '\\':
+				strcpy(key_str, (char*) "\\\\");
+				break;
+			case '\'':
+				strcpy(key_str, (char*) "\\");
+				break;
+			case '\"':
+				strcpy(key_str, (char*) "\\\"");
+				break;
+			case '\?':
+				strcpy(key_str, (char*) "\\?");
+				break;
+			case ' ':
+				strcpy(key_str, (char*) "<space>");
+				break;
+			case '\0':
+				strcpy(key_str, (char*) "\\0");
 				break;
 			default:
 				break;
@@ -113,7 +141,7 @@ static Dict* new_Dict() {
 	d->getIndex = dict_getIndex;
 	d->insert = dict_insert;
 	d->get = dict_get;
-	d->print = dict_printMap;
+	d->print = dict_print;
 	d->getTotalCount = dict_getTotalCount;
 	d->getSmallestCount = dict_getSmallestCount;
 
